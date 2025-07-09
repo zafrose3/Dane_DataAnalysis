@@ -1,17 +1,17 @@
-# Use exact Python and Debian versions
-FROM python:3.10.13-slim-bookworm
+# Use SPECIFIC Python 3.10 image with Debian bullseye
+FROM python:3.10.12-slim-bullseye
 
-# Verify Python version first
-RUN python --version
+# Verify Python version immediately
+RUN python --version  # Must show 3.10.12
 
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc python3-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Install compatible NumPy first, then pandas
+# FIRST install numpy with exact version, THEN pandas
 RUN pip install --no-cache-dir numpy==1.23.5 && \
-    pip install --no-cache-dir pandas==2.0.3
+    pip install --no-cache-dir pandas==1.5.3  # Older stable version
 
 # Final verification
-RUN python -c "import pandas, numpy; print(f'Pandas {pandas.__version__}, NumPy {numpy.__version__}')"
+RUN python -c "import pandas; print(f'Pandas {pandas.__version__} working!')"
