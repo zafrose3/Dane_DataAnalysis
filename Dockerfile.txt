@@ -1,18 +1,21 @@
-# Use Python 3.10 as base image
+# Explicitly use Python 3.10
 FROM python:3.10-slim
 
-# Set work directory
-WORKDIR /app
+# Verify Python version immediately
+RUN python --version && pip --version
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y build-essential
+# Install system dependencies (including build tools if needed)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc python3-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy project files
-COPY . /app
+# Create and use a virtual environment (optional but recommended)
+ENV VIRTUAL_ENV=/opt/venv
+RUN python -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Install Python dependencies
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+# Install pandas with explicit version pinning
+RUN pip install --no-cache-dir pandas==2.0.3  # Use a version known to have wheels for 3.10
 
-# Start your app (edit this line for your app)
-CMD ["gunicorn", "app:app"]  # or uvicorn main:app --host 0.0.0.0 --port 8000
+# Verify installation
+RUN python -c "import pandas; print(f'Pandas version: {pandas.__version__}')"
