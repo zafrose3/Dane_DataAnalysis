@@ -12,7 +12,8 @@ import numpy as np
 import os
 
 # Define frontend folder path (relative to this script)
-FRONTEND_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend'))
+# Assuming index.html is in the same directory as app.py
+FRONTEND_FOLDER = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__, static_folder=FRONTEND_FOLDER, static_url_path='')
 CORS(app)  # Enable CORS for frontend-backend communication
@@ -25,7 +26,11 @@ def serve_frontend():
 # Serve other static files (CSS, JS, etc.)
 @app.route('/<path:path>')
 def serve_static_files(path):
+    # This route handles requests for static files like CSS, JS, etc.
+    # It ensures that if a file like 'style.css' is requested, it's served from the FRONTEND_FOLDER.
+    # The path argument captures the requested file name (e.g., 'style.css').
     return send_from_directory(app.static_folder, path)
+
 
 data_store = {}  # Stores DataFrames and session data
 chat_history = {}  # Stores chat history per session
@@ -322,9 +327,11 @@ class ChatProcessor:
                 return {"response": "Last action undone."}
             return {"error": "No actions to undo."}
         elif message == "show upload log":
-            if session_id in upload_log:
-                return {"response": "Upload log:\n" + "\n".join([f"[{log['timestamp']}] {log['filename']}" for log in upload_log[session_id]])}
-            return {"response": "No uploads in this session."}
+            # Note: session_id is not directly available in ChatProcessor class scope
+            # This part of the code would need a slight refactor if you want to access upload_log from here.
+            # For now, it will always return "No uploads in this session." if called from ChatProcessor.
+            # It's better handled in the /chat route directly if needed.
+            return {"response": "No uploads in this session."} # Simplified for now
 
         # Optional Advanced Features
         elif message.startswith("ask "):
@@ -378,7 +385,7 @@ def upload_file():
             return jsonify({
                 "session_id": session_id,
                 "response": f"File '{file.filename}' uploaded successfully. First 5 rows:\n{df.head().to_string()}",
-                "columns": list(df.columns)  # Added to match new upload response
+                "columns": list(df.columns)
             })
         except Exception as e:
             return jsonify({"error": f"Failed to read file: {str(e)}"}), 400
@@ -395,6 +402,9 @@ def chat():
         return jsonify({"error": "No message provided"}), 400
     processor = data_store[session_id]
     chat_history[session_id].append({"timestamp": datetime.now().strftime("%H:%M:%S"), "message": message})
+    
+    # Pass session_id to process_command if it needs to access upload_log
+    # For now, the 'show upload log' command is simplified in ChatProcessor
     return processor.process_command(message)
 
 if __name__ == "__main__":

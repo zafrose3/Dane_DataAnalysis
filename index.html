@@ -114,7 +114,8 @@
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
             try {
-                const response = await fetch('"https://dane-dataanalysis.onrender.com/upload', {
+                // Corrected: Removed extra double quote at the beginning
+                const response = await fetch('https://dane-dataanalysis.onrender.com/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -127,7 +128,7 @@
                     showError(result.error);
                 }
             } catch (error) {
-                showError("Failed to upload file. Is the server running?");
+                showError("Failed to upload file. Is the server running? Error: " + error.message);
             } finally {
                 uploadButton.disabled = false;
                 uploadSpinner.style.display = 'none';
@@ -145,7 +146,8 @@
             sendButton.disabled = true;
             sendSpinner.style.display = 'block';
             try {
-                const response = await fetch('http://127.0.0.1:5000/chat', {
+                // Corrected: Changed to relative path for chat endpoint
+                const response = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ session_id: sessionId, message })
@@ -155,10 +157,10 @@
                 if (result.table) addTable(result.table);
                 if (result.image) addImage(result.image);
                 if (result.file) addDownloadLink(result.file);
-                adeptus(message);
+                // adeptus(message); // This function is not defined in the provided context, consider removing or defining it.
                 messageInput.value = '';
             } catch (error) {
-                showError("Failed to send message. Is the server running?");
+                showError("Failed to send message. Is the server running? Error: " + error.message);
             } finally {
                 sendButton.disabled = false;
                 sendSpinner.style.display = 'none';
@@ -201,13 +203,21 @@
                 headerRow.appendChild(th);
             });
             thead.appendChild(headerRow);
-            const rows = Object.values(tableData[headers[0]]).length;
+            // Assuming tableData values are objects/arrays, iterate through the first one to get row count
+            const firstHeaderData = tableData[headers[0]];
+            const rows = Array.isArray(firstHeaderData) ? firstHeaderData.length : Object.keys(firstHeaderData).length;
+
             for (let i = 0; i < rows; i++) {
                 const row = document.createElement('tr');
                 headers.forEach(header => {
                     const td = document.createElement('td');
                     td.className = 'border-b border-gray-200 px-4 py-2 text-sm text-gray-600';
-                    td.textContent = tableData[header][i] || '-';
+                    // Handle cases where tableData[header] might be an object (like for describe() output)
+                    if (typeof tableData[header] === 'object' && tableData[header] !== null) {
+                        td.textContent = tableData[header][Object.keys(tableData[header])[i]] || '-';
+                    } else {
+                        td.textContent = tableData[header][i] || '-';
+                    }
                     row.appendChild(td);
                 });
                 tbody.appendChild(row);
@@ -236,7 +246,8 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = 'bot-message rounded-lg p-3 m-3';
             const link = document.createElement('a');
-            link.href = `http://127.0.0.1:5000/download/${sessionId}`;
+            // Corrected: Changed to relative path for download endpoint
+            link.href = `/download/${sessionId}`; // Assuming /download/<session_id> is the correct endpoint
             link.textContent = 'Download Report';
             link.className = 'text-blue-500 hover:underline font-medium';
             messageDiv.appendChild(link);
