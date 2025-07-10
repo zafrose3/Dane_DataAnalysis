@@ -1,21 +1,29 @@
-# Use official Python base image
-FROM python:3.11-slim
+# Use Python 3.11 with full system tools (not slim)
+FROM python:3.11
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first (for better caching)
-COPY requirements.txt .
+# Install system dependencies for pandas/numpy
+RUN apt-get update && \
+    apt-get install -y \
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
+# Copy requirements first (for layer caching)
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your app
+# Copy application code
 COPY . .
 
-# Expose the port Flask/Gunicorn will run on
+# Set environment variables (adjust for your app)
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=production
+
+# Expose port (default Flask port)
 EXPOSE 5000
 
-# Run the app using Gunicorn
-# Replace "app:app" if your main file or app object is different
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+# Run with Gunicorn (adjust workers as needed)
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "app:app"]
