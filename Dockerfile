@@ -1,13 +1,14 @@
-# FINAL SOLUTION - Guaranteed to work
-FROM python:3.10.12-slim-bullseye
+# Builder stage
+FROM python:3.13-slim AS builder
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir gunicorn==23.0.0 # Explicitly install Gunicorn
 
-# Verify Python version first thing
-RUN python --version
-
-# Install ONLY pre-built wheels (no compilation)
-RUN pip install --no-cache-dir --only-binary :all: \
-    numpy==1.23.5 \
-    pandas==1.5.3
-
-# Final test
-RUN python -c "import pandas; print(f'\nSUCCESS! Pandas {pandas.__version__} working!')"
+# Final stage
+FROM python:3.13-slim
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin/gunicorn /usr/local/bin/gunicorn # Copy Gunicorn executable
+# ... rest of your Dockerfile
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:create_app()"] # Or app:app
