@@ -1,0 +1,7 @@
+{
+  "name": "Dane - Data for All",
+  "description": "A friendly, block-based data analysis tool that makes exploring information fun and easy for everyone. Drag, drop, and discover!",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
