@@ -11,7 +11,7 @@ STRICT FORMATTING RULES:
 1. NEVER use Markdown formatting. Absolutely no bolding (**), italics (*), headers (#), bullet points (-), or backticks (\`).
 2. ONLY return raw, unformatted plain text.
 3. Keep responses extremely concise: maximum 2 to 3 short sentences.
-4. Tone: Helpful, professional, and clear. Avoid "cute" or childish language. Do not use excessive emojis.
+4. Tone: Helpful, professional, and clear. Do not use "cute" or childish language. Avoid excessive emojis.
 5. Focus on the direct business or data value of the insight.`;
 
 export const getGeminiInsights = async (data: any[], question?: string) => {
@@ -29,7 +29,7 @@ export const getGeminiInsights = async (data: any[], question?: string) => {
       model,
       contents: context,
       config: {
-        temperature: 0.3, // Lower temperature for more consistent, less "creative" output
+        temperature: 0.3, 
         systemInstruction: DANE_SYSTEM_INSTRUCTION
       }
     });

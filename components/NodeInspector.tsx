@@ -84,21 +84,21 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
 
   const getExplanation = (type: NodeType) => {
     switch (type) {
-      case NodeType.DATA_SOURCE: return { title: "Data Input", text: "This is where you bring your data into the lab to begin your analysis adventure.", icon: <Database size={16}/> };
-      case NodeType.FILTER: return { title: "Super Filter", text: "Select specific subsets of your data to focus on what matters most.", icon: <Filter size={16}/> };
-      case NodeType.DATA_CLEANER: return { title: "Soap & Water", text: "Clean and format your data to ensure accuracy and consistency.", icon: <Eraser size={16}/> };
-      case NodeType.REGRESSION: return { title: "Guesser", text: "Predict continuous numerical values based on historical trends.", icon: <TrendingUp size={16}/> };
-      case NodeType.CLASSIFICATION: return { title: "Sorter", text: "Automatically categorize items into predefined groups or labels.", icon: <Tags size={16}/> };
-      case NodeType.CLUSTERING: return { title: "Grouper", text: "Discover hidden patterns and naturally occurring groups in your data.", icon: <Shapes size={16}/> };
-      case NodeType.OUTLIER_FINDER: return { title: "Strange Spotter", text: "Identify unusual data points that deviate significantly from the norm.", icon: <Target size={16}/> };
-      case NodeType.SENTIMENT: return { title: "Mood Checker", text: "Analyze text to determine underlying emotional tone and sentiment.", icon: <Smile size={16}/> };
-      case NodeType.IMAGE_AI: return { title: "Eye Spy", text: "Use computer vision to identify and classify objects in images.", icon: <Camera size={16}/> };
-      case NodeType.FORECASTER: return { title: "Future Seer", text: "Project future trends based on chronological patterns and history.", icon: <CalendarDays size={16}/> };
-      case NodeType.VISUALIZER: return { title: "Chart Maker", text: "Convert complex numbers into clear and intuitive visual representations.", icon: <BarChart3 size={16}/> };
-      case NodeType.AI_INSIGHT: return { title: "Dane's Wisdom", text: "Generate high-level strategic insights directly from your dataset.", icon: <BrainCircuit size={16}/> };
-      case NodeType.PYTHON_SCRIPT: return { title: "Python Code", text: "Execute custom logic and advanced data processing using code.", icon: <Code2 size={16}/> };
-      case NodeType.DEEP_LEARNING: return { title: "Super Brain", text: "Utilize neural networks to process complex, multi-layered information.", icon: <Zap size={16}/> };
-      default: return { title: "Help Block", text: "This specialized block assists with your data processing workflow.", icon: <Info size={16}/> };
+      case NodeType.DATA_SOURCE: return { title: "Data Input", text: "Bring your information into the lab to begin analysis.", icon: <Database size={16}/> };
+      case NodeType.FILTER: return { title: "Super Filter", text: "Refine your dataset to focus only on relevant entries.", icon: <Filter size={16}/> };
+      case NodeType.DATA_CLEANER: return { title: "Soap & Water", text: "Clean and standardize data for better accuracy.", icon: <Eraser size={16}/> };
+      case NodeType.REGRESSION: return { title: "Guesser", text: "Predict numbers based on existing trends in your data.", icon: <TrendingUp size={16}/> };
+      case NodeType.CLASSIFICATION: return { title: "Sorter", text: "Assign labels to items automatically based on patterns.", icon: <Tags size={16}/> };
+      case NodeType.CLUSTERING: return { title: "Grouper", text: "Group similar items together to find hidden relationships.", icon: <Shapes size={16}/> };
+      case NodeType.OUTLIER_FINDER: return { title: "Strange Spotter", text: "Locate unusual data points that stand out from the rest.", icon: <Target size={16}/> };
+      case NodeType.SENTIMENT: return { title: "Mood Checker", text: "Determine the emotional tone of your text-based data.", icon: <Smile size={16}/> };
+      case NodeType.IMAGE_AI: return { title: "Eye Spy", text: "Process and categorize visual information from images.", icon: <Camera size={16}/> };
+      case NodeType.FORECASTER: return { title: "Future Seer", text: "Forecast future events based on chronological data history.", icon: <CalendarDays size={16}/> };
+      case NodeType.VISUALIZER: return { title: "Chart Maker", text: "Create intuitive charts to visualize complex relationships.", icon: <BarChart3 size={16}/> };
+      case NodeType.AI_INSIGHT: return { title: "Dane's Wisdom", text: "Get professional-level analysis of your data's story.", icon: <BrainCircuit size={16}/> };
+      case NodeType.PYTHON_SCRIPT: return { title: "Python Code", text: "Apply custom scripts for advanced data transformations.", icon: <Code2 size={16}/> };
+      case NodeType.DEEP_LEARNING: return { title: "Super Brain", text: "Solve complex tasks using advanced multi-layered networks.", icon: <Zap size={16}/> };
+      default: return { title: "Help Block", text: "Specialized processing for your data workflow.", icon: <Info size={16}/> };
     }
   };
 
