@@ -84,21 +84,21 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
 
   const getExplanation = (type: NodeType) => {
     switch (type) {
-      case NodeType.DATA_SOURCE: return { title: "Data Input", text: "This is where you bring your data into the lab! It's like bringing ingredients into a kitchen.", icon: <Database size={16}/> };
-      case NodeType.FILTER: return { title: "Super Filter", text: "Only keep what you want. Like a colander that keeps the pasta but lets the water go!", icon: <Filter size={16}/> };
-      case NodeType.DATA_CLEANER: return { title: "Soap & Water", text: "Data can be messy with empty spots. This block scrubs it clean!", icon: <Eraser size={16}/> };
-      case NodeType.REGRESSION: return { title: "Guesser", text: "Try to predict a number. Like guessing how tall a tree will be next year!", icon: <TrendingUp size={16}/> };
-      case NodeType.CLASSIFICATION: return { title: "Sorter", text: "Put things into buckets. Is it a fruit or a vegetable? A cat or a dog?", icon: <Tags size={16}/> };
-      case NodeType.CLUSTERING: return { title: "Grouper", text: "Find things that look alike and put them in a family, even if we don't know their names.", icon: <Shapes size={16}/> };
-      case NodeType.OUTLIER_FINDER: return { title: "Strange Spotter", text: "Find the weird ones! Like a purple sheep in a field of white ones.", icon: <Target size={16}/> };
-      case NodeType.SENTIMENT: return { title: "Mood Checker", text: "Is the text happy, sad, or angry? The computer reads the feelings!", icon: <Smile size={16}/> };
-      case NodeType.IMAGE_AI: return { title: "Eye Spy", text: "Give the computer eyes! It can look at photos and tell you what it sees.", icon: <Camera size={16}/> };
-      case NodeType.FORECASTER: return { title: "Future Seer", text: "Look at what happened before to guess what will happen tomorrow.", icon: <CalendarDays size={16}/> };
-      case NodeType.VISUALIZER: return { title: "Chart Maker", text: "Turn boring numbers into beautiful pictures like bar charts and pies!", icon: <BarChart3 size={16}/> };
-      case NodeType.AI_INSIGHT: return { title: "Dane's Wisdom", text: "Ask me to tell you the story hidden deep inside your data!", icon: <BrainCircuit size={16}/> };
-      case NodeType.PYTHON_SCRIPT: return { title: "Python Code", text: "The ultimate power! Write your own magic spells with code.", icon: <Code2 size={16}/> };
-      case NodeType.DEEP_LEARNING: return { title: "Super Brain", text: "A computer brain that learns like yours, using layers to understand hard things.", icon: <Zap size={16}/> };
-      default: return { title: "Help Block", text: "This block helps you process data in a special way!", icon: <Info size={16}/> };
+      case NodeType.DATA_SOURCE: return { title: "Data Input", text: "This is where you bring your data into the lab to begin your analysis adventure.", icon: <Database size={16}/> };
+      case NodeType.FILTER: return { title: "Super Filter", text: "Select specific subsets of your data to focus on what matters most.", icon: <Filter size={16}/> };
+      case NodeType.DATA_CLEANER: return { title: "Soap & Water", text: "Clean and format your data to ensure accuracy and consistency.", icon: <Eraser size={16}/> };
+      case NodeType.REGRESSION: return { title: "Guesser", text: "Predict continuous numerical values based on historical trends.", icon: <TrendingUp size={16}/> };
+      case NodeType.CLASSIFICATION: return { title: "Sorter", text: "Automatically categorize items into predefined groups or labels.", icon: <Tags size={16}/> };
+      case NodeType.CLUSTERING: return { title: "Grouper", text: "Discover hidden patterns and naturally occurring groups in your data.", icon: <Shapes size={16}/> };
+      case NodeType.OUTLIER_FINDER: return { title: "Strange Spotter", text: "Identify unusual data points that deviate significantly from the norm.", icon: <Target size={16}/> };
+      case NodeType.SENTIMENT: return { title: "Mood Checker", text: "Analyze text to determine underlying emotional tone and sentiment.", icon: <Smile size={16}/> };
+      case NodeType.IMAGE_AI: return { title: "Eye Spy", text: "Use computer vision to identify and classify objects in images.", icon: <Camera size={16}/> };
+      case NodeType.FORECASTER: return { title: "Future Seer", text: "Project future trends based on chronological patterns and history.", icon: <CalendarDays size={16}/> };
+      case NodeType.VISUALIZER: return { title: "Chart Maker", text: "Convert complex numbers into clear and intuitive visual representations.", icon: <BarChart3 size={16}/> };
+      case NodeType.AI_INSIGHT: return { title: "Dane's Wisdom", text: "Generate high-level strategic insights directly from your dataset.", icon: <BrainCircuit size={16}/> };
+      case NodeType.PYTHON_SCRIPT: return { title: "Python Code", text: "Execute custom logic and advanced data processing using code.", icon: <Code2 size={16}/> };
+      case NodeType.DEEP_LEARNING: return { title: "Super Brain", text: "Utilize neural networks to process complex, multi-layered information.", icon: <Zap size={16}/> };
+      default: return { title: "Help Block", text: "This specialized block assists with your data processing workflow.", icon: <Info size={16}/> };
     }
   };
 
@@ -165,11 +165,11 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
               setMlExplanation(res || "");
               setIsLoading(false);
             }} className="w-full bg-slate-800 text-white p-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
-              {isLoading ? 'Thinking...' : 'AI Explanation'}
+              {isLoading ? 'Processing...' : 'Get Analysis Logic'}
             </button>
             {mlExplanation && (
-              <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200">
-                <p className="text-[11px] font-bold text-slate-800 leading-relaxed italic whitespace-pre-wrap">
+              <div className="bg-slate-100 p-4 rounded-2xl border-2 border-slate-300">
+                <p className="text-[11px] font-bold text-slate-900 leading-relaxed whitespace-pre-wrap">
                   {mlExplanation}
                 </p>
               </div>
@@ -200,20 +200,20 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
       case NodeType.AI_INSIGHT:
         return (
           <div className="space-y-4">
-             <div className="bg-pink-500 p-6 rounded-[2rem] text-white shadow-xl">
-                <h3 className="font-black text-lg mb-2">DANE'S WISDOM</h3>
+             <div className="bg-indigo-600 p-6 rounded-[2rem] text-white shadow-xl">
+                <h3 className="font-black text-lg mb-2 uppercase tracking-tighter">Strategic Insight</h3>
                 <button onClick={async () => {
                   setIsLoading(true);
                   const res = await getGeminiInsights(data);
                   setInsight(res || "");
                   setIsLoading(false);
-                }} disabled={data.length === 0} className="w-full bg-white text-pink-600 p-4 rounded-2xl font-black text-xs shadow-lg disabled:opacity-50">
-                  {isLoading ? 'DANE IS SEARCHING...' : 'FIND SECRETS ✨'}
+                }} disabled={data.length === 0} className="w-full bg-white text-indigo-600 p-4 rounded-2xl font-black text-xs shadow-lg disabled:opacity-50">
+                  {isLoading ? 'GENERATING INSIGHTS...' : 'ANALYZE PATTERNS'}
                 </button>
              </div>
              {insight && (
-               <div className="bg-white p-5 rounded-3xl border-2 border-pink-100">
-                 <p className="text-[11px] font-bold text-slate-800 italic whitespace-pre-wrap leading-relaxed">
+               <div className="bg-slate-100 p-5 rounded-3xl border-2 border-slate-300">
+                 <p className="text-[11px] font-bold text-slate-900 whitespace-pre-wrap leading-relaxed">
                    {insight}
                  </p>
                </div>
@@ -230,8 +230,8 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
     <div className="w-96 bg-white border-l border-slate-200 h-full flex flex-col p-8 overflow-y-auto z-10 shadow-2xl">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tighter uppercase">Workspace View</h2>
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Dane Lab Helper</p>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tighter uppercase leading-none">Workspace View</h2>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Data Lab Helper</p>
         </div>
         <div className="bg-slate-100 px-3 py-1.5 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest">
           {node.type.split('_').join(' ')}
@@ -239,15 +239,15 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
       </div>
 
       {/* Explanation Card */}
-      <div className="bg-indigo-50 border-2 border-indigo-100 p-5 rounded-[2rem] mb-8 relative overflow-hidden group hover:bg-indigo-100 transition-colors">
+      <div className="bg-slate-50 border-2 border-slate-100 p-5 rounded-[2rem] mb-8 relative overflow-hidden group hover:bg-slate-100 transition-colors">
          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <BookOpen size={80} />
          </div>
-         <div className="flex items-center gap-2 text-indigo-700 mb-2">
+         <div className="flex items-center gap-2 text-slate-700 mb-2">
             {explanation.icon}
-            <h3 className="font-black text-sm uppercase tracking-wider">{explanation.title} Guide</h3>
+            <h3 className="font-black text-sm uppercase tracking-wider">{explanation.title} Summary</h3>
          </div>
-         <p className="text-xs font-medium text-indigo-900/70 leading-relaxed italic">{explanation.text}</p>
+         <p className="text-xs font-medium text-slate-600 leading-relaxed">{explanation.text}</p>
       </div>
       
       {renderContent()}
