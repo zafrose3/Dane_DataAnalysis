@@ -1,7 +1,4 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // Strict system instruction to ensure clean, professional, and readable output without Markdown symbols
 const DANE_SYSTEM_INSTRUCTION = `You are Dane, a professional and concise data analysis assistant. 
@@ -15,6 +12,13 @@ STRICT FORMATTING RULES:
 5. Focus on the direct business or data value of the insight.`;
 
 export const getGeminiInsights = async (data: any[], question?: string) => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    console.error("API Key missing");
+    return "I couldn't start my analysis brain because the API key is missing. Please check your settings!";
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   const model = 'gemini-3-flash-preview';
   
   const dataSample = data.slice(0, 15);
@@ -42,6 +46,10 @@ export const getGeminiInsights = async (data: any[], question?: string) => {
 };
 
 export const explainMLTask = async (task: string, data: any[], targetField?: string) => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) return "AI services are currently unavailable.";
+
+  const ai = new GoogleGenAI({ apiKey });
   const model = 'gemini-3-flash-preview';
   const dataSample = data.slice(0, 5);
   
@@ -59,6 +67,10 @@ export const explainMLTask = async (task: string, data: any[], targetField?: str
 };
 
 export const getChartSuggestion = async (data: any[]) => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) return null;
+
+  const ai = new GoogleGenAI({ apiKey });
   const model = 'gemini-3-flash-preview';
   const dataSample = data.slice(0, 5);
   
