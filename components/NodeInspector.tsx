@@ -24,7 +24,9 @@ import {
   Eraser,
   Target,
   CalendarDays,
-  BookOpen
+  BookOpen,
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 
 interface InspectorProps {
@@ -37,6 +39,8 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
   const [data, setData] = useState<any[]>([]);
   const [insight, setInsight] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
+  const [cleanProgress, setCleanProgress] = useState(0);
   const [mlExplanation, setMlExplanation] = useState<string>('');
 
   const findDataSource = (targetNode: NodeData): any[] => {
@@ -52,6 +56,8 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
     setData(currentData);
     setMlExplanation('');
     setInsight('');
+    setCleanProgress(0);
+    setIsCleaning(false);
   }, [node, allNodes]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,6 +86,21 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
       }
     };
     reader.readAsText(file);
+  };
+
+  const simulateCleaning = () => {
+    setIsCleaning(true);
+    setCleanProgress(0);
+    const interval = setInterval(() => {
+      setCleanProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsCleaning(false);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 200);
   };
 
   const getExplanation = (type: NodeType) => {
@@ -116,6 +137,46 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
               <div className="bg-indigo-600 p-4 rounded-2xl text-white shadow-lg">
                 <p className="text-sm font-bold truncate">{node.config.fileName}</p>
                 <p className="text-[10px] mt-2 font-black bg-white/20 px-2 py-1 rounded-full inline-block">{data.length} ROWS FOUND</p>
+              </div>
+            )}
+          </div>
+        );
+
+      case NodeType.DATA_CLEANER:
+        return (
+          <div className="space-y-4">
+            <div className="bg-cyan-50 border-2 border-cyan-100 p-4 rounded-2xl space-y-3">
+              <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest">Cleaning Checklist</h4>
+              <div className="space-y-2">
+                {['Remove Empty Rows', 'Fix Text Case', 'Delete Duplicates'].map((task) => (
+                  <div key={task} className="flex items-center gap-2">
+                    <input type="checkbox" defaultChecked className="rounded border-cyan-300 text-cyan-500 focus:ring-cyan-500" />
+                    <span className="text-xs font-bold text-slate-600">{task}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button 
+              onClick={simulateCleaning}
+              disabled={isCleaning || data.length === 0}
+              className="w-full bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-50"
+            >
+              {isCleaning ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+              {isCleaning ? 'SCRUBBING DATA...' : 'START CLEANING'}
+            </button>
+
+            {cleanProgress > 0 && (
+              <div className="space-y-2">
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div className="bg-cyan-500 h-full transition-all duration-300" style={{ width: `${cleanProgress}%` }} />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    {cleanProgress === 100 ? 'Squeaky Clean!' : 'Cleaning in progress...'}
+                  </span>
+                  {cleanProgress === 100 && <CheckCircle2 size={14} className="text-emerald-500" />}
+                </div>
               </div>
             )}
           </div>

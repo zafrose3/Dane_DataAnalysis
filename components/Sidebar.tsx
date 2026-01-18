@@ -18,7 +18,9 @@ import {
   Smile,
   Eraser,
   Target,
-  CalendarDays
+  CalendarDays,
+  ExternalLink,
+  Heart
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -59,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddNode, onExport }) => {
           D
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Dane</h1>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Dane</h1>
           <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">AI Playground</p>
         </div>
       </div>
@@ -89,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddNode, onExport }) => {
         ))}
       </div>
 
-      <div className="mt-8 pt-6 border-t border-slate-100">
+      <div className="mt-8 pt-6 border-t border-slate-100 space-y-6">
         <button 
           onClick={onExport}
           className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-black text-white p-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
@@ -97,6 +99,24 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddNode, onExport }) => {
           <Download size={20} />
           Export Report
         </button>
+
+        {/* Portfolio Link Footer */}
+        <div className="text-center group">
+          <a 
+            href="https://amrishazafreen.vercel.app" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex flex-col items-center gap-1.5 transition-all"
+          >
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-indigo-500 transition-colors">
+              Crafted with <Heart size={10} className="inline-block text-pink-500 mb-0.5" /> by
+            </p>
+            <div className="flex items-center gap-1.5 bg-slate-50 px-4 py-2 rounded-full border border-slate-100 group-hover:border-indigo-200 group-hover:bg-indigo-50 transition-all shadow-sm">
+              <span className="text-xs font-black text-slate-700 tracking-tight group-hover:text-indigo-700 uppercase">Amrisha Zafreen</span>
+              <ExternalLink size={12} className="text-slate-300 group-hover:text-indigo-400" />
+            </div>
+          </a>
+        </div>
       </div>
     </aside>
   );
