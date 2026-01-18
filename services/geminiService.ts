@@ -1,6 +1,6 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Strict system instruction to ensure clean, professional, and readable output without Markdown symbols
 const DANE_SYSTEM_INSTRUCTION = `You are Dane, a professional and concise data analysis assistant. 
 Your goal is to explain data insights and machine learning concepts in plain, high-contrast English.
 
@@ -13,10 +13,7 @@ STRICT FORMATTING RULES:
 
 export const getGeminiInsights = async (data: any[], question?: string) => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    console.error("API Key missing");
-    return "I couldn't start my analysis brain because the API key is missing. Please check your settings!";
-  }
+  if (!apiKey) return "AI_ASLEEP";
 
   const ai = new GoogleGenAI({ apiKey });
   const model = 'gemini-3-flash-preview';
@@ -39,31 +36,36 @@ export const getGeminiInsights = async (data: any[], question?: string) => {
     });
 
     return response.text;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Error:", error);
+    if (error.message?.includes("entity was not found")) return "RESET_KEY";
     return "I encountered an error analyzing the data. Please ensure the data format is correct.";
   }
 };
 
 export const explainMLTask = async (task: string, data: any[], targetField?: string) => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey) return "AI services are currently unavailable.";
+  if (!apiKey) return "AI_ASLEEP";
 
   const ai = new GoogleGenAI({ apiKey });
-  const model = 'gemini-3-flash-preview';
+  const model = 'gemini-3-pro-preview'; // Upgraded for complex reasoning
   const dataSample = data.slice(0, 5);
   
-  const response = await ai.models.generateContent({
-    model,
-    contents: `Briefly explain the goal of ${task} using this context: ${JSON.stringify(dataSample)}. ${targetField ? `The target variable is ${targetField}.` : ''} 
-    No markdown, just plain text. Max 2-3 sentences.`,
-    config: {
-      temperature: 0.3,
-      systemInstruction: DANE_SYSTEM_INSTRUCTION
-    }
-  });
-
-  return response.text;
+  try {
+    const response = await ai.models.generateContent({
+      model,
+      contents: `Briefly explain the goal of ${task} using this context: ${JSON.stringify(dataSample)}. ${targetField ? `The target variable is ${targetField}.` : ''} 
+      No markdown, just plain text. Max 2-3 sentences.`,
+      config: {
+        temperature: 0.3,
+        systemInstruction: DANE_SYSTEM_INSTRUCTION
+      }
+    });
+    return response.text;
+  } catch (error: any) {
+    if (error.message?.includes("entity was not found")) return "RESET_KEY";
+    return "AI is having trouble thinking right now. Please try again.";
+  }
 };
 
 export const getChartSuggestion = async (data: any[]) => {
@@ -74,25 +76,24 @@ export const getChartSuggestion = async (data: any[]) => {
   const model = 'gemini-3-flash-preview';
   const dataSample = data.slice(0, 5);
   
-  const response = await ai.models.generateContent({
-    model,
-    contents: `Suggest a chart for: ${JSON.stringify(dataSample)}. Return JSON only.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          chartType: { type: Type.STRING },
-          xAxis: { type: Type.STRING },
-          yAxis: { type: Type.STRING },
-          reason: { type: Type.STRING }
-        },
-        required: ["chartType", "xAxis", "yAxis"]
-      }
-    }
-  });
-
   try {
+    const response = await ai.models.generateContent({
+      model,
+      contents: `Suggest a chart for: ${JSON.stringify(dataSample)}. Return JSON only.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            chartType: { type: Type.STRING },
+            xAxis: { type: Type.STRING },
+            yAxis: { type: Type.STRING },
+            reason: { type: Type.STRING }
+          },
+          required: ["chartType", "xAxis", "yAxis"]
+        }
+      }
+    });
     return JSON.parse(response.text);
   } catch (e) {
     return null;

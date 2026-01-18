@@ -26,8 +26,17 @@ import {
   CalendarDays,
   BookOpen,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Lock,
+  ExternalLink
 } from 'lucide-react';
+
+// Use 'any' for aistudio to avoid conflict with pre-defined AIStudio type in the environment
+declare global {
+  interface Window {
+    aistudio: any;
+  }
+}
 
 interface InspectorProps {
   node: NodeData;
@@ -42,6 +51,7 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
   const [isCleaning, setIsCleaning] = useState(false);
   const [cleanProgress, setCleanProgress] = useState(0);
   const [mlExplanation, setMlExplanation] = useState<string>('');
+  const [isAiAsleep, setIsAiAsleep] = useState(true);
 
   const findDataSource = (targetNode: NodeData): any[] => {
     if (targetNode.type === NodeType.DATA_SOURCE) return targetNode.config.data || [];
@@ -52,6 +62,16 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
   };
 
   useEffect(() => {
+    // Check if API Key is selected or provided via environment
+    const checkStatus = async () => {
+      if (window.aistudio && await window.aistudio.hasSelectedApiKey()) {
+        setIsAiAsleep(false);
+      } else {
+        setIsAiAsleep(!process.env.API_KEY);
+      }
+    };
+    checkStatus();
+
     const currentData = findDataSource(node);
     setData(currentData);
     setMlExplanation('');
@@ -59,6 +79,14 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
     setCleanProgress(0);
     setIsCleaning(false);
   }, [node, allNodes]);
+
+  const handleWakeUpDane = async () => {
+    if (window.aistudio) {
+      await window.aistudio.openSelectKey();
+      // Assume the key selection was successful after triggering openSelectKey() as per instructions
+      setIsAiAsleep(false);
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,6 +154,38 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
   const explanation = getExplanation(node.type);
 
   const renderContent = () => {
+    const isAiNode = node.type === NodeType.AI_INSIGHT || [NodeType.REGRESSION, NodeType.CLASSIFICATION, NodeType.CLUSTERING, NodeType.DEEP_LEARNING, NodeType.OUTLIER_FINDER, NodeType.FORECASTER].includes(node.type);
+    
+    if (isAiAsleep && isAiNode) {
+      return (
+        <div className="space-y-4">
+          <div className="bg-slate-50 border-2 border-slate-200 p-6 rounded-[2rem] text-center space-y-4 shadow-inner">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">
+              <Lock size={20} className="text-slate-300" />
+            </div>
+            <div>
+              <p className="text-xs font-black text-slate-800 uppercase tracking-tighter">Dane's Brain is Asleep</p>
+              <p className="text-[10px] text-slate-400 font-bold mt-1">To use AI analysis, you need to connect an API key first.</p>
+            </div>
+            <button 
+              onClick={handleWakeUpDane}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl font-black text-xs transition-all active:scale-95 shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
+            >
+              <Zap size={14} fill="currentColor" />
+              WAKE UP DANE
+            </button>
+            <a 
+              href="https://ai.google.dev/gemini-api/docs/billing" 
+              target="_blank" 
+              className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-1 hover:text-indigo-500 transition-colors"
+            >
+              How do I get a key? <ExternalLink size={10} />
+            </a>
+          </div>
+        </div>
+      );
+    }
+
     switch (node.type) {
       case NodeType.DATA_SOURCE:
         return (
@@ -160,7 +220,7 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
             <button 
               onClick={simulateCleaning}
               disabled={isCleaning || data.length === 0}
-              className="w-full bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-50"
+              className="w-full bg-cyan-500 hover:bg-cyan-600 text-white p-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-50"
             >
               {isCleaning ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
               {isCleaning ? 'SCRUBBING DATA...' : 'START CLEANING'}
@@ -182,32 +242,6 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
           </div>
         );
 
-      case NodeType.IMAGE_AI:
-        return (
-          <div className="space-y-4">
-             <div className="bg-purple-100 p-4 rounded-2xl flex flex-col items-center gap-3">
-                <Camera size={40} className="text-purple-600" />
-                <p className="text-xs font-bold text-center text-purple-900 leading-tight">Drop images here to classify them using Vision AI!</p>
-                <button className="w-full bg-purple-600 text-white p-2.5 rounded-xl font-bold text-xs">OPEN CAMERA</button>
-             </div>
-          </div>
-        );
-
-      case NodeType.SENTIMENT:
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Text Column to Read</label>
-              <input type="text" placeholder="e.g. Comments..." value={node.config.field || ''} onChange={(e) => onUpdate(node.id, { ...node.config, field: e.target.value })} className="w-full p-3 rounded-xl border-2 border-slate-100 bg-slate-50 text-xs font-bold focus:border-pink-300 outline-none" />
-            </div>
-            <div className="bg-pink-50 p-4 rounded-2xl flex justify-around">
-               <span className="text-2xl grayscale opacity-50">😢</span>
-               <span className="text-2xl grayscale opacity-50">😐</span>
-               <span className="text-2xl grayscale opacity-50">😊</span>
-            </div>
-          </div>
-        );
-
       case NodeType.REGRESSION:
       case NodeType.CLASSIFICATION:
       case NodeType.CLUSTERING:
@@ -223,13 +257,19 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
             <button onClick={async () => {
               setIsLoading(true);
               const res = await explainMLTask(explanation.title, data, node.config.target);
-              setMlExplanation(res || "");
+              if (res === "AI_ASLEEP" || res === "RESET_KEY") {
+                setIsAiAsleep(true);
+                setMlExplanation("");
+              } else {
+                setMlExplanation(res || "");
+              }
               setIsLoading(false);
-            }} className="w-full bg-slate-800 text-white p-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
-              {isLoading ? 'Processing...' : 'Get Analysis Logic'}
+            }} className="w-full bg-slate-800 text-white p-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95">
+              {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+              {isLoading ? 'Thinking...' : 'Get Analysis Logic'}
             </button>
             {mlExplanation && (
-              <div className="bg-slate-100 p-4 rounded-2xl border-2 border-slate-300">
+              <div className="bg-slate-100 p-4 rounded-2xl border-2 border-slate-300 animate-in slide-in-from-top-2 duration-300">
                 <p className="text-[11px] font-bold text-slate-900 leading-relaxed whitespace-pre-wrap">
                   {mlExplanation}
                 </p>
@@ -253,7 +293,7 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
                 </div>
              </div>
              <div className="bg-slate-50 rounded-2xl h-48 border-2 border-slate-100 flex items-center justify-center">
-                {data.length > 0 && node.config.xAxis && node.config.yAxis ? <p className="text-[10px] font-black text-slate-400">Preview Active</p> : <BarChart3 size={32} className="text-slate-200" />}
+                {data.length > 0 && node.config.xAxis && node.config.yAxis ? <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Preview Active</p> : <BarChart3 size={32} className="text-slate-200" />}
              </div>
           </div>
         );
@@ -266,14 +306,19 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
                 <button onClick={async () => {
                   setIsLoading(true);
                   const res = await getGeminiInsights(data);
-                  setInsight(res || "");
+                  if (res === "AI_ASLEEP" || res === "RESET_KEY") {
+                    setIsAiAsleep(true);
+                    setInsight("");
+                  } else {
+                    setInsight(res || "");
+                  }
                   setIsLoading(false);
-                }} disabled={data.length === 0} className="w-full bg-white text-indigo-600 p-4 rounded-2xl font-black text-xs shadow-lg disabled:opacity-50">
-                  {isLoading ? 'GENERATING INSIGHTS...' : 'ANALYZE PATTERNS'}
+                }} disabled={data.length === 0} className="w-full bg-white text-indigo-600 p-4 rounded-2xl font-black text-xs shadow-lg active:scale-95 disabled:opacity-50 transition-all">
+                  {isLoading ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'ANALYZE PATTERNS'}
                 </button>
              </div>
              {insight && (
-               <div className="bg-slate-100 p-5 rounded-3xl border-2 border-slate-300">
+               <div className="bg-slate-100 p-5 rounded-3xl border-2 border-slate-300 animate-in slide-in-from-top-2 duration-300">
                  <p className="text-[11px] font-bold text-slate-900 whitespace-pre-wrap leading-relaxed">
                    {insight}
                  </p>
@@ -299,7 +344,6 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
         </div>
       </div>
 
-      {/* Explanation Card */}
       <div className="bg-slate-50 border-2 border-slate-100 p-5 rounded-[2rem] mb-8 relative overflow-hidden group hover:bg-slate-100 transition-colors">
          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <BookOpen size={80} />
