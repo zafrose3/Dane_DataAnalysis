@@ -6,13 +6,11 @@ import {
   Filter, 
   BarChart3, 
   BrainCircuit, 
-  Calculator,
   Download,
   Code2,
   TrendingUp,
   Tags,
   Shapes,
-  Shrink,
   Zap,
   Camera,
   Smile,
@@ -20,15 +18,20 @@ import {
   Target,
   CalendarDays,
   ExternalLink,
-  Heart
+  Heart,
+  PlayCircle,
+  Activity,
+  ShieldCheck
 } from 'lucide-react';
 
 interface SidebarProps {
   onAddNode: (type: NodeType) => void;
   onExport: () => void;
+  onRunAll?: () => void;
+  isAiReady?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onAddNode, onExport }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onAddNode, onExport, onRunAll, isAiReady }) => {
   const blocks = [
     { section: 'The Basics', items: [
       { type: NodeType.DATA_SOURCE, label: 'Data Input', icon: <Database />, color: 'bg-blue-500', desc: 'Add some data!' },
@@ -66,6 +69,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddNode, onExport }) => {
         </div>
       </div>
 
+      <div className="mb-8 flex items-center gap-3 p-3 rounded-2xl border-2 bg-slate-50 border-slate-100">
+        <div className={`p-2 rounded-xl text-white shadow-sm ${isAiReady ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}>
+          <Activity size={18} />
+        </div>
+        <div className="flex-1">
+          <p className={`font-black text-[10px] uppercase tracking-widest ${isAiReady ? 'text-emerald-600' : 'text-red-600'}`}>
+            System: {isAiReady ? 'Online' : 'Offline'}
+          </p>
+          <p className="text-[10px] text-slate-500 font-bold leading-tight">
+            {isAiReady ? 'Dane is ready to analyze' : 'Check connection settings'}
+          </p>
+        </div>
+      </div>
+
       <div className="flex-1 space-y-6">
         {blocks.map((section) => (
           <div key={section.section}>
@@ -91,17 +108,24 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddNode, onExport }) => {
         ))}
       </div>
 
-      <div className="mt-8 pt-6 border-t border-slate-100 space-y-6">
+      <div className="mt-8 pt-6 border-t border-slate-100 space-y-3">
+        <button 
+          onClick={onRunAll}
+          className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-2xl font-black text-xs shadow-lg transition-all active:scale-95 uppercase tracking-widest"
+        >
+          <PlayCircle size={18} />
+          Execute Pipeline
+        </button>
+
         <button 
           onClick={onExport}
-          className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-black text-white p-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
+          className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-black text-white p-4 rounded-2xl font-bold text-xs shadow-lg transition-all active:scale-95 uppercase tracking-widest"
         >
-          <Download size={20} />
+          <Download size={18} />
           Export Report
         </button>
 
-        {/* Portfolio Link Footer */}
-        <div className="text-center group">
+        <div className="text-center group pt-4">
           <a 
             href="https://amrishazafreen.vercel.app" 
             target="_blank" 

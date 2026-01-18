@@ -11,11 +11,21 @@ STRICT FORMATTING RULES:
 4. Tone: Helpful, professional, and clear. Do not use "cute" or childish language. Avoid excessive emojis.
 5. Focus on the direct business or data value of the insight.`;
 
-export const getGeminiInsights = async (data: any[], question?: string) => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) return "AI_ASLEEP";
+const handleAiError = (error: any) => {
+  console.error("Gemini Error:", error);
+  const msg = error?.message || "";
+  // Per guidelines: if entity was not found, we need to re-trigger key selection
+  if (msg.includes("Requested entity was not found") || msg.includes("API_KEY_INVALID")) {
+    return "RESET_KEY";
+  }
+  return "ERROR";
+};
 
-  const ai = new GoogleGenAI({ apiKey });
+export const getGeminiInsights = async (data: any[], question?: string) => {
+  if (!process.env.API_KEY) return "AI_ASLEEP";
+
+  // Create instance right before use with literal process.env.API_KEY per guidelines
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const model = 'gemini-3-flash-preview';
   
   const dataSample = data.slice(0, 15);
@@ -37,18 +47,18 @@ export const getGeminiInsights = async (data: any[], question?: string) => {
 
     return response.text;
   } catch (error: any) {
-    console.error("Gemini Error:", error);
-    if (error.message?.includes("entity was not found")) return "RESET_KEY";
+    const status = handleAiError(error);
+    if (status === "RESET_KEY") return "RESET_KEY";
     return "I encountered an error analyzing the data. Please ensure the data format is correct.";
   }
 };
 
 export const explainMLTask = async (task: string, data: any[], targetField?: string) => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) return "AI_ASLEEP";
+  if (!process.env.API_KEY) return "AI_ASLEEP";
 
-  const ai = new GoogleGenAI({ apiKey });
-  const model = 'gemini-3-pro-preview'; // Upgraded for complex reasoning
+  // Create instance right before use with literal process.env.API_KEY per guidelines
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const model = 'gemini-3-pro-preview'; 
   const dataSample = data.slice(0, 5);
   
   try {
@@ -63,39 +73,8 @@ export const explainMLTask = async (task: string, data: any[], targetField?: str
     });
     return response.text;
   } catch (error: any) {
-    if (error.message?.includes("entity was not found")) return "RESET_KEY";
+    const status = handleAiError(error);
+    if (status === "RESET_KEY") return "RESET_KEY";
     return "AI is having trouble thinking right now. Please try again.";
-  }
-};
-
-export const getChartSuggestion = async (data: any[]) => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) return null;
-
-  const ai = new GoogleGenAI({ apiKey });
-  const model = 'gemini-3-flash-preview';
-  const dataSample = data.slice(0, 5);
-  
-  try {
-    const response = await ai.models.generateContent({
-      model,
-      contents: `Suggest a chart for: ${JSON.stringify(dataSample)}. Return JSON only.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            chartType: { type: Type.STRING },
-            xAxis: { type: Type.STRING },
-            yAxis: { type: Type.STRING },
-            reason: { type: Type.STRING }
-          },
-          required: ["chartType", "xAxis", "yAxis"]
-        }
-      }
-    });
-    return JSON.parse(response.text);
-  } catch (e) {
-    return null;
   }
 };

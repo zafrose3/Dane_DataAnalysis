@@ -28,15 +28,9 @@ import {
   CheckCircle2,
   Loader2,
   Lock,
-  ExternalLink
+  ExternalLink,
+  ShieldCheck
 } from 'lucide-react';
-
-// Use 'any' for aistudio to avoid conflict with pre-defined AIStudio type in the environment
-declare global {
-  interface Window {
-    aistudio: any;
-  }
-}
 
 interface InspectorProps {
   node: NodeData;
@@ -51,7 +45,7 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
   const [isCleaning, setIsCleaning] = useState(false);
   const [cleanProgress, setCleanProgress] = useState(0);
   const [mlExplanation, setMlExplanation] = useState<string>('');
-  const [isAiAsleep, setIsAiAsleep] = useState(true);
+  const isAiAvailable = !!process.env.API_KEY;
 
   const findDataSource = (targetNode: NodeData): any[] => {
     if (targetNode.type === NodeType.DATA_SOURCE) return targetNode.config.data || [];
@@ -62,16 +56,6 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
   };
 
   useEffect(() => {
-    // Check if API Key is selected or provided via environment
-    const checkStatus = async () => {
-      if (window.aistudio && await window.aistudio.hasSelectedApiKey()) {
-        setIsAiAsleep(false);
-      } else {
-        setIsAiAsleep(!process.env.API_KEY);
-      }
-    };
-    checkStatus();
-
     const currentData = findDataSource(node);
     setData(currentData);
     setMlExplanation('');
@@ -79,14 +63,6 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
     setCleanProgress(0);
     setIsCleaning(false);
   }, [node, allNodes]);
-
-  const handleWakeUpDane = async () => {
-    if (window.aistudio) {
-      await window.aistudio.openSelectKey();
-      // Assume the key selection was successful after triggering openSelectKey() as per instructions
-      setIsAiAsleep(false);
-    }
-  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -156,32 +132,12 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
   const renderContent = () => {
     const isAiNode = node.type === NodeType.AI_INSIGHT || [NodeType.REGRESSION, NodeType.CLASSIFICATION, NodeType.CLUSTERING, NodeType.DEEP_LEARNING, NodeType.OUTLIER_FINDER, NodeType.FORECASTER].includes(node.type);
     
-    if (isAiAsleep && isAiNode) {
+    if (isAiNode && !isAiAvailable) {
       return (
-        <div className="space-y-4">
-          <div className="bg-slate-50 border-2 border-slate-200 p-6 rounded-[2rem] text-center space-y-4 shadow-inner">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">
-              <Lock size={20} className="text-slate-300" />
-            </div>
-            <div>
-              <p className="text-xs font-black text-slate-800 uppercase tracking-tighter">Dane's Brain is Asleep</p>
-              <p className="text-[10px] text-slate-400 font-bold mt-1">To use AI analysis, you need to connect an API key first.</p>
-            </div>
-            <button 
-              onClick={handleWakeUpDane}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl font-black text-xs transition-all active:scale-95 shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
-            >
-              <Zap size={14} fill="currentColor" />
-              WAKE UP DANE
-            </button>
-            <a 
-              href="https://ai.google.dev/gemini-api/docs/billing" 
-              target="_blank" 
-              className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-1 hover:text-indigo-500 transition-colors"
-            >
-              How do I get a key? <ExternalLink size={10} />
-            </a>
-          </div>
+        <div className="bg-red-50 p-6 rounded-3xl border-2 border-red-100 flex flex-col items-center text-center gap-3">
+          <Lock className="text-red-300" size={32} />
+          <p className="text-xs font-black text-red-800 uppercase tracking-tighter">AI Service Restricted</p>
+          <p className="text-[10px] text-red-600 font-bold leading-relaxed">This workspace needs an API key to run AI features. Contact your administrator or deploy with an API_KEY.</p>
         </div>
       );
     }
@@ -257,16 +213,11 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
             <button onClick={async () => {
               setIsLoading(true);
               const res = await explainMLTask(explanation.title, data, node.config.target);
-              if (res === "AI_ASLEEP" || res === "RESET_KEY") {
-                setIsAiAsleep(true);
-                setMlExplanation("");
-              } else {
-                setMlExplanation(res || "");
-              }
+              setMlExplanation(res || "");
               setIsLoading(false);
-            }} className="w-full bg-slate-800 text-white p-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95">
+            }} disabled={data.length === 0} className="w-full bg-slate-800 text-white p-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 disabled:opacity-50">
               {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-              {isLoading ? 'Thinking...' : 'Get Analysis Logic'}
+              {isLoading ? 'Thinking...' : 'Analyze Pattern'}
             </button>
             {mlExplanation && (
               <div className="bg-slate-100 p-4 rounded-2xl border-2 border-slate-300 animate-in slide-in-from-top-2 duration-300">
@@ -306,12 +257,7 @@ const NodeInspector: React.FC<InspectorProps> = ({ node, allNodes, onUpdate }) =
                 <button onClick={async () => {
                   setIsLoading(true);
                   const res = await getGeminiInsights(data);
-                  if (res === "AI_ASLEEP" || res === "RESET_KEY") {
-                    setIsAiAsleep(true);
-                    setInsight("");
-                  } else {
-                    setInsight(res || "");
-                  }
+                  setInsight(res || "");
                   setIsLoading(false);
                 }} disabled={data.length === 0} className="w-full bg-white text-indigo-600 p-4 rounded-2xl font-black text-xs shadow-lg active:scale-95 disabled:opacity-50 transition-all">
                   {isLoading ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'ANALYZE PATTERNS'}

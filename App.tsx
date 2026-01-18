@@ -12,6 +12,7 @@ const App: React.FC = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isAiReady, setIsAiReady] = useState(!!process.env.API_KEY);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const addNode = (type: NodeType) => {
@@ -109,7 +110,11 @@ const App: React.FC = () => {
         }
       `}</style>
 
-      <Sidebar onAddNode={addNode} onExport={exportToPDF} />
+      <Sidebar 
+        onAddNode={addNode} 
+        onExport={exportToPDF} 
+        isAiReady={isAiReady}
+      />
 
       <main 
         ref={canvasRef}
@@ -126,7 +131,6 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Floating Help Toggle */}
         <button 
           onClick={() => setShowHelp(true)}
           className="absolute bottom-8 left-8 z-30 help-button bg-indigo-600 text-white px-6 py-4 rounded-[2rem] font-black shadow-xl hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-3"
