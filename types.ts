@@ -1,39 +1,28 @@
 
-export enum NodeType {
-  DATA_SOURCE = 'DATA_SOURCE',
-  FILTER = 'FILTER',
-  AGGREGATOR = 'AGGREGATOR',
-  VISUALIZER = 'VISUALIZER',
-  AI_INSIGHT = 'AI_INSIGHT',
-  PYTHON_SCRIPT = 'PYTHON_SCRIPT',
-  // Machine Learning
-  REGRESSION = 'REGRESSION',
-  CLASSIFICATION = 'CLASSIFICATION',
-  CLUSTERING = 'CLUSTERING',
-  DIM_REDUCTION = 'DIM_REDUCTION',
-  // Deep Learning & Advanced
-  DEEP_LEARNING = 'DEEP_LEARNING',
-  IMAGE_AI = 'IMAGE_AI',
-  SENTIMENT = 'SENTIMENT',
-  // Data Quality
-  DATA_CLEANER = 'DATA_CLEANER',
-  OUTLIER_FINDER = 'OUTLIER_FINDER',
-  FORECASTER = 'FORECASTER'
-}
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'OD' | 'HOLIDAY' | 'NONE';
 
-export interface NodeData {
+export type AppTheme = 'modern' | 'retro';
+
+export interface Subject {
   id: string;
-  type: NodeType;
-  position: { x: number; y: number };
-  config: any;
-  inputFrom?: string; // ID of the node providing input
+  name: string;
+  target: number;
+  lastUpdated: number;
+  // Key is YYYY-MM-DD, Value is array of statuses for multiple classes
+  history: Record<string, AttendanceStatus[]>;
 }
 
-export interface DataRow {
-  [key: string]: any;
+export interface UserProfile {
+  name: string;
+  rollNumber: string;
+  institution: string;
+  overallTarget: number;
+  theme: AppTheme;
 }
 
-export interface WorkflowState {
-  nodes: NodeData[];
-  selectedNodeId: string | null;
+export interface AttendanceState {
+  subjects: Subject[];
+  profile: UserProfile;
 }
+
+export type ActionType = 'PRESENT' | 'ABSENT' | 'OD' | 'HOLIDAY';

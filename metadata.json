@@ -1,7 +1,5 @@
 {
-  "name": "Dane - Data for All",
-  "description": "A friendly, block-based data analysis tool that makes exploring information fun and easy for everyone. Drag, drop, and discover!",
-  "requestFramePermissions": [
-    "camera"
-  ]
+  "name": "Attendly - Smart Attendance Tracker",
+  "description": "A comprehensive attendance management system to track subjects, calculate percentages, manage ODs (On Duty), and stay on top of your academic requirements.",
+  "requestFramePermissions": []
 }

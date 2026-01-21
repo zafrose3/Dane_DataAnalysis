@@ -3,64 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dane - Kid Friendly Data Analysis</title>
+    <title>Attendly - Attendance Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                DEFAULT: 'var(--primary-color)',
+                hover: 'var(--primary-hover)',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono&display=swap" rel="stylesheet">
     <style>
+        /* --- GLOBAL & MODERN THEME --- */
+        :root {
+            --primary-color: #2563eb; /* Blue 600 */
+            --primary-hover: #1d4ed8;
+        }
+
+        /* Dark Mode Accent: Dark Yellow (Amber) for Modern Theme */
+        html.dark {
+            --primary-color: #f59e0b; /* Amber 500 */
+            --primary-hover: #d97706; /* Amber 600 */
+        }
+
         body {
-            font-family: 'Fredoka', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            background-color: #f8fafc;
-        }
-        .flow-background {
-            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        .animate-dash {
-            stroke-dasharray: 10;
-            animation: dash 30s linear infinite;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
         }
 
-        @keyframes dash {
-            from {
-                stroke-dashoffset: 1000;
-            }
-            to {
-                stroke-dashoffset: 0;
-            }
+        html.dark .glass-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- RETRO THEME CONFIG --- */
+        
+        /* 1. Base Retro Font */
+        body.theme-retro {
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* 2. Retro LIGHT MODE */
+        html:not(.dark) body.theme-retro {
+            background-color: #f1f5f9;
+            --primary-color: #059669;
+            --primary-hover: #047857;
+        }
+
+        html:not(.dark) body.theme-retro .glass-card {
+            background: #ffffff;
+            border: 3px solid var(--primary-color);
+            box-shadow: 4px 4px 0px var(--primary-color);
+            border-radius: 0;
+        }
+
+        /* Force Black text in Retro Light - Very broad to catch everything */
+        html:not(.dark) body.theme-retro h1, 
+        html:not(.dark) body.theme-retro h2, 
+        html:not(.dark) body.theme-retro h3, 
+        html:not(.dark) body.theme-retro h4, 
+        html:not(.dark) body.theme-retro p, 
+        html:not(.dark) body.theme-retro span, 
+        html:not(.dark) body.theme-retro label,
+        html:not(.dark) body.theme-retro div {
+            color: #000000 !important;
+        }
+
+        /* 3. Retro DARK MODE */
+        html.dark body.theme-retro {
+            background-color: #0f172a !important;
+            --primary-color: #10b981;
+            --primary-hover: #059669;
+        }
+
+        html.dark body.theme-retro .glass-card {
+            background: #1e293b !important;
+            border: 3px solid var(--primary-color) !important;
+            box-shadow: 6px 6px 0px var(--primary-color) !important;
+            border-radius: 0;
+        }
+
+        /* Force White text in Retro Dark - Overriding Tailwind classes explicitly */
+        html.dark body.theme-retro h1, 
+        html.dark body.theme-retro h2, 
+        html.dark body.theme-retro h3, 
+        html.dark body.theme-retro h4, 
+        html.dark body.theme-retro p, 
+        html.dark body.theme-retro span, 
+        html.dark body.theme-retro label,
+        html.dark body.theme-retro div:not(.bg-primary *) {
+            color: #ffffff !important;
+        }
+
+        /* Sidebar Item Overrides */
+        html.dark body.theme-retro aside button {
+            color: #ffffff !important;
+        }
+        html.dark body.theme-retro aside button.bg-primary\/10 {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+            color: #10b981 !important;
+        }
+
+        /* Button content should stay white */
+        .bg-primary, .bg-primary * {
+            color: #ffffff !important;
+        }
+        
+        /* Specific status indicators */
+        html.dark body.theme-retro .text-emerald-700 { color: #34d399 !important; }
+        html.dark body.theme-retro .text-red-700 { color: #f87171 !important; }
+        html.dark body.theme-retro .text-blue-700 { color: #60a5fa !important; }
+        html.dark body.theme-retro .text-amber-700 { color: #fbbf24 !important; }
+
+        /* Status bar in footer */
+        html.dark body.theme-retro .bg-slate-800\/50 p {
+            color: #94a3b8 !important;
         }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "recharts": "https://esm.sh/recharts@^3.6.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
   }
 }
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
-<body>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
     <div id="root"></div>
 <script type="module" src="/index.tsx"></script>
 </body>

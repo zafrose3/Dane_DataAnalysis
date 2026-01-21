@@ -1,233 +1,188 @@
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { NodeType, NodeData } from './types';
-import Sidebar from './components/Sidebar';
-import Node from './components/Node';
-import NodeInspector from './components/NodeInspector';
-import HelpHub from './components/HelpHub';
-import { Sparkles, MousePointer2, HelpCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Layout } from './components/Layout';
+import { Dashboard } from './components/Dashboard';
+import { Profile } from './components/Profile';
+import { Subject, UserProfile, AttendanceStatus } from './types';
+import { formatDate } from './utils/attendance';
+import { Icons } from './constants';
+
+const LOCAL_STORAGE_KEY = 'attendly_data_v4'; // Bump version for schema change
+const THEME_MODE_KEY = 'attendly_theme_mode';
+
+const INITIAL_PROFILE: UserProfile = {
+  name: '',
+  rollNumber: '',
+  institution: '',
+  overallTarget: 75,
+  theme: 'modern'
+};
 
 const App: React.FC = () => {
-  const [nodes, setNodes] = useState<NodeData[]>([]);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
-  const [isAiReady, setIsAiReady] = useState(!!process.env.API_KEY);
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'profile'>('dashboard');
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [profile, setProfile] = useState<UserProfile>(INITIAL_PROFILE);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
-  const addNode = (type: NodeType) => {
-    const newNode: NodeData = {
-      id: `${type.toLowerCase()}-${Date.now()}`,
-      type,
-      position: { x: 100 + Math.random() * 50, y: 100 + Math.random() * 50 },
-      config: {},
-    };
-    setNodes(prev => [...prev, newNode]);
-    setSelectedNodeId(newNode.id);
-  };
+  useEffect(() => {
+    const savedMode = localStorage.getItem(THEME_MODE_KEY);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    const isDark = savedMode ? savedMode === 'dark' : prefersDark;
+    setDarkMode(isDark);
+    if (isDark) document.documentElement.classList.add('dark');
 
-  const deleteNode = (id: string) => {
-    setNodes(prev => {
-      const filtered = prev.filter(n => n.id !== id);
-      return filtered.map(n => n.inputFrom === id ? { ...n, inputFrom: undefined } : n);
-    });
-    if (selectedNodeId === id) setSelectedNodeId(null);
-  };
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const legacyV3 = localStorage.getItem('attendly_data_v3');
 
-  const updateNodeConfig = (id: string, config: any) => {
-    setNodes(prev => prev.map(n => n.id === id ? { ...n, config } : n));
-  };
-
-  const handleDragStart = (e: React.DragEvent, id: string) => {
-    e.dataTransfer.setData('nodeId', id);
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    e.dataTransfer.setData('offsetX', (e.clientX - rect.left).toString());
-    e.dataTransfer.setData('offsetY', (e.clientY - rect.top).toString());
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const id = e.dataTransfer.getData('nodeId');
-    const offsetX = parseFloat(e.dataTransfer.getData('offsetX'));
-    const offsetY = parseFloat(e.dataTransfer.getData('offsetY'));
-
-    if (canvasRef.current && id) {
-      const canvasRect = canvasRef.current.getBoundingClientRect();
-      const x = e.clientX - canvasRect.left - offsetX;
-      const y = e.clientY - canvasRect.top - offsetY;
-
-      setNodes(prev => {
-        const movedNode = prev.find(n => n.id === id);
-        if (!movedNode) return prev;
-
-        const updatedNodes = prev.map(n => {
-          if (n.id === id) return { ...n, position: { x, y } };
-          return n;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setSubjects(parsed.subjects || []);
+        setProfile({ ...INITIAL_PROFILE, ...(parsed.profile || {}) });
+      } catch (e) {
+        console.error("Failed to parse storage", e);
+      }
+    } else if (legacyV3) {
+      // Migrate from single status to array
+      try {
+        const parsed = JSON.parse(legacyV3);
+        const migratedSubjects = (parsed.subjects || []).map((s: any) => {
+          const newHistory: Record<string, AttendanceStatus[]> = {};
+          Object.entries(s.history || {}).forEach(([date, status]) => {
+            newHistory[date] = [status as AttendanceStatus];
+          });
+          return { ...s, history: newHistory };
         });
+        setSubjects(migratedSubjects);
+        setProfile({ ...INITIAL_PROFILE, ...(parsed.profile || {}) });
+      } catch (e) {
+        console.error("Migration failed", e);
+      }
+    }
+    setIsLoaded(true);
+  }, []);
 
-        let bestCandidateId: string | undefined = undefined;
-        let minDistance = 150; 
+  useEffect(() => {
+    if (isLoaded) {
+      const body = document.body;
+      body.classList.remove('theme-modern', 'theme-retro');
+      body.classList.add(`theme-${profile.theme}`);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ subjects, profile }));
+    }
+  }, [subjects, profile, isLoaded]);
 
-        updatedNodes.forEach(other => {
-          if (other.id === id) return;
-          const dist = Math.sqrt(Math.pow(x - (other.position.x + 180), 2) + Math.pow(y - other.position.y, 2));
-          if (dist < minDistance) {
-            minDistance = dist;
-            bestCandidateId = other.id;
-          }
-        });
+  const toggleDarkMode = () => {
+    const next = !darkMode;
+    setDarkMode(next);
+    localStorage.setItem(THEME_MODE_KEY, next ? 'dark' : 'light');
+    if (next) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  };
 
-        if (bestCandidateId) {
-          return updatedNodes.map(n => n.id === id ? { ...n, inputFrom: bestCandidateId } : n);
+  const handleUpdateAttendance = (id: string, status: AttendanceStatus, date?: string, index?: number) => {
+    const dateStr = date || formatDate(new Date());
+    setSubjects(prev => prev.map(sub => {
+      if (sub.id !== id) return sub;
+      const newHistory = { ...sub.history };
+      const daySessions = [...(newHistory[dateStr] || [])];
+
+      if (index !== undefined) {
+        // Edit or Remove specific slot
+        if (status === 'NONE') {
+          daySessions.splice(index, 1);
+        } else {
+          daySessions[index] = status;
         }
+      } else {
+        // Add new slot (Quick Action or Calendar Add)
+        if (status !== 'NONE') {
+          daySessions.push(status);
+        }
+      }
 
-        return updatedNodes;
-      });
+      if (daySessions.length === 0) delete newHistory[dateStr];
+      else newHistory[dateStr] = daySessions;
+
+      return { ...sub, history: newHistory, lastUpdated: Date.now() };
+    }));
+  };
+
+  const handleAddSubject = (name: string, target: number) => {
+    setSubjects(prev => [{
+      id: crypto.randomUUID(),
+      name,
+      target,
+      history: {},
+      lastUpdated: Date.now()
+    }, ...prev]);
+  };
+
+  const handleDeleteSubject = (id: string) => {
+    if (window.confirm("Delete this subject?")) {
+      setSubjects(prev => prev.filter(sub => sub.id !== id));
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
+  const exportData = () => {
+    const data = JSON.stringify({ subjects, profile }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `attendly_backup_${formatDate(new Date())}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
-  const exportToPDF = () => {
-    setIsExporting(true);
-    setTimeout(() => {
-      window.print();
-      setIsExporting(false);
-    }, 500);
+  const importData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (parsed.subjects && parsed.profile && window.confirm("Overwrite current data?")) {
+          setSubjects(parsed.subjects);
+          setProfile(parsed.profile);
+        }
+      } catch (err) {
+        alert("Invalid backup file.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
-  const selectedNode = nodes.find(n => n.id === selectedNodeId);
+  if (!isLoaded) return null;
 
   return (
-    <div className="flex h-screen w-screen bg-slate-50 overflow-hidden font-['Fredoka']">
-      <style>{`
-        @media print {
-          aside, .inspector-panel, .floating-ui, .help-button { display: none !important; }
-          .canvas-area { width: 100% !important; height: 100% !important; background: white !important; }
-          .node-box { border: 2px solid #ccc !important; box-shadow: none !important; }
-        }
-      `}</style>
-
-      <Sidebar 
-        onAddNode={addNode} 
-        onExport={exportToPDF} 
-        isAiReady={isAiReady}
-      />
-
-      <main 
-        ref={canvasRef}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        className="flex-1 relative flow-background canvas-area p-10 overflow-hidden"
-      >
-        <div className="absolute top-8 left-8 z-10 floating-ui">
-          <div className="bg-white/80 backdrop-blur-md px-6 py-3 rounded-3xl border-2 border-slate-100 shadow-sm flex items-center gap-3">
-             <div className="w-8 h-8 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
-               <MousePointer2 size={16} />
-             </div>
-             <p className="text-slate-600 font-bold text-sm">Drag blocks near each other to connect them!</p>
-          </div>
-        </div>
-
-        <button 
-          onClick={() => setShowHelp(true)}
-          className="absolute bottom-8 left-8 z-30 help-button bg-indigo-600 text-white px-6 py-4 rounded-[2rem] font-black shadow-xl hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-3"
-        >
-          <HelpCircle size={20} />
-          <span>HELP ME DANE!</span>
-          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-lg">🦕</div>
-        </button>
-
-        <svg className="absolute inset-0 pointer-events-none w-full h-full">
-          {nodes.map(node => {
-            if (!node.inputFrom) return null;
-            const source = nodes.find(n => n.id === node.inputFrom);
-            if (!source) return null;
-            
-            const startX = source.position.x + 192; 
-            const startY = source.position.y + 45; 
-            const endX = node.position.x; 
-            const endY = node.position.y + 45;
-
-            return (
-              <g key={`link-${node.id}`}>
-                <path
-                  d={`M ${startX} ${startY} C ${startX + 40} ${startY}, ${endX - 40} ${endY}, ${endX} ${endY}`}
-                  stroke="#cbd5e1"
-                  strokeWidth="4"
-                  fill="transparent"
-                  className="animate-dash"
-                />
-              </g>
-            );
-          })}
-        </svg>
-
-        {nodes.map((node) => (
-          <Node
-            key={node.id}
-            {...node}
-            isSelected={selectedNodeId === node.id}
-            onSelect={setSelectedNodeId}
-            onDelete={deleteNode}
-            onDragStart={handleDragStart}
-            title={node.config.fileName || node.type.replace('_', ' ')}
-            hasInput={node.type !== NodeType.DATA_SOURCE}
-            hasOutput={true}
-          />
-        ))}
-
-        {nodes.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-6">
-            <div className="relative">
-               <div className="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center">
-                 <Sparkles size={64} className="animate-pulse" />
-               </div>
-               <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg text-2xl">
-                 🦕
-               </div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-3xl font-bold text-slate-400 mb-2 uppercase tracking-tighter">Workspace is Empty!</h3>
-              <p className="text-slate-400 font-medium">Drag a block from the left to start your adventure.</p>
-              <button 
-                onClick={() => setShowHelp(true)}
-                className="mt-6 text-indigo-500 font-black text-sm uppercase tracking-widest hover:underline"
-              >
-                Confused? Read the Discovery Guide
-              </button>
-            </div>
-          </div>
-        )}
-      </main>
-
-      <div className="inspector-panel">
-        {selectedNode ? (
-          <NodeInspector 
-            node={selectedNode} 
-            allNodes={nodes}
-            onUpdate={updateNodeConfig}
+    <div className="relative min-h-screen">
+      <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+        {activeTab === 'dashboard' ? (
+          <Dashboard 
+            subjects={subjects} 
+            profile={profile}
+            onUpdateAttendance={handleUpdateAttendance}
+            onAddSubject={handleAddSubject}
+            onDeleteSubject={handleDeleteSubject}
           />
         ) : (
-          <div className="w-96 bg-white border-l border-slate-200 h-full flex flex-col items-center justify-center p-8 text-slate-400 text-center gap-4">
-             <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center">
-                <MousePointer2 size={32} className="text-slate-200" />
-             </div>
-             <p className="font-bold text-sm uppercase tracking-widest">Select a block to inspect it</p>
-          </div>
+          <Profile 
+            profile={profile}
+            onUpdate={setProfile}
+            onExport={exportData}
+            onImport={importData}
+          />
         )}
-      </div>
-
-      {isExporting && (
-        <div className="fixed inset-0 bg-white/90 z-50 flex items-center justify-center flex-col gap-4 animate-in fade-in duration-300">
-           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-           <p className="text-2xl font-bold text-indigo-900">Dane is preparing your report...</p>
-        </div>
-      )}
-
-      {showHelp && <HelpHub onClose={() => setShowHelp(false)} />}
+      </Layout>
+      <button
+        onClick={toggleDarkMode}
+        className="fixed bottom-6 right-6 z-[100] p-4 rounded-full bg-white dark:bg-slate-800 text-primary shadow-2xl border border-slate-200 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all duration-300"
+      >
+        {darkMode ? <Icons.Sun /> : <Icons.Moon />}
+      </button>
     </div>
   );
 };
